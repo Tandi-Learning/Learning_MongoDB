@@ -44,7 +44,7 @@ namespace SimpleMongo
             {
                 Name = "Tandi",
                 Age = 40,
-                Colors = new List<string> { "Red", "Yellow"},
+                Colors = new List<string> { "Red", "Yellow" },
                 Pets = new List<Pet> { new Pet { Name = "Colby", Type = "Poodle" } },
                 ExtraElements = new BsonDocument("Some Random Name", "Some Random Food")
             };
@@ -52,6 +52,29 @@ namespace SimpleMongo
             var people = Open<Person>("test", "people");
             if (!people.AsQueryable().Where(p => p.Name == "Tandi").Any())
                 await people.InsertOneAsync(person);
+
+            var persons = new List<Person>
+            {
+                new Person
+                {
+                    Name = "John",
+                    Age = 35,
+                    Colors = new List<string> { "Yellow", "Black", "Blue" },
+                    Pets = new List<Pet> { new Pet { Name = "Shelby", Type = "Cat" } },
+                    ExtraElements = new BsonDocument("What is my name", "My name is John")
+                },
+                new Person
+                {
+                    Name = "Paul",
+                    Age = 38,
+                    Colors = new List<string> { "Green", "Silver", "Cyan", "Red" },
+                    Pets = new List<Pet> { new Pet { Name = "Kat", Type = "Lizard" } },
+                }
+            };
+
+            List<string> names = new List<string> { "John", "Paul" };
+            if (!people.AsQueryable().Where(p => names.Contains(p.Name)).Any())
+                await people.InsertManyAsync(new[] { persons[0], persons[1] });
 
             //using (var writer = new JsonWriter(Console.Out))
             //{
