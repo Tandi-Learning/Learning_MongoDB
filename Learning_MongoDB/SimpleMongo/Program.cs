@@ -15,13 +15,29 @@ namespace SimpleMongo
         static void Main(string[] args)
         {
             Init();
-            Console.WriteLine("Q to Quit");
-            while (true)
+            bool keepLoop = true;
+            while (keepLoop)
             {
+                Console.WriteLine("(A) Add - (F) Find - (D) Delete - (Q) Quit");
                 var cmd = Console.ReadLine();
-                if (string.Compare(cmd, "Q", true) == 0)
-                    break;
-                AddPerson();
+                //if (string.Compare(cmd, "Q", true) == 0)
+                //    break;
+                switch (cmd.ToUpper())
+                {
+                    case "A":
+                        AddPerson();
+                        break;
+                    case "F":
+                        Console.Write("Filter = ");
+                        cmd = Console.ReadLine();
+                        FindPerson(cmd);
+                        break;
+                    case "D":
+                        break;
+                    case "Q":
+                        keepLoop = false;
+                        break;
+                }
             }
         }
 
@@ -36,6 +52,23 @@ namespace SimpleMongo
             var conventionPack = new ConventionPack();
             conventionPack.Add(new CamelCaseElementNameConvention());
             ConventionRegistry.Register("camelCase", conventionPack, t => true);
+        }
+
+        private static async void FindPerson(string cmd)
+        {
+            var people = Open<Person>("test", "people");
+            //var filter = Builders<Person>.Filter.Eq("Name", "Tandi");
+            //var list = await people.Find(filter).ToListAsync();
+
+            cmd = cmd.Replace("\"","\\\"");
+            var list = await people.Find("{name:\"Tandi\"}").ToListAsync();
+            foreach (var doc in list)
+            {
+                Console.WriteLine(doc.ToBsonDocument());
+            }
+
+            //await people.Find(new BsonDocument())
+            //    .ForEachAsync(d => Console.WriteLine(d.ToBsonDocument()));
         }
 
         static async void AddPerson()
