@@ -56,17 +56,36 @@ namespace SimpleMongo
 
         private static async void FindPerson(string cmd)
         {
-            var people = Open<Person>("test", "people");
+            var grades = Open<BsonDocument>("students", "grades");
             //var filter = Builders<Person>.Filter.Eq("Name", "Tandi");
             //var list = await people.Find(filter).ToListAsync();
 
-            cmd = cmd.Replace("\"","\\\"");
-            var list = await people.Find("{name:\"Tandi\"}").ToListAsync();
+            cmd = string.IsNullOrWhiteSpace(cmd) ? "{}" : cmd;
+            //var list = await people.Find("{age:{$gt:35}}")
+            var filter = Builders<BsonDocument>.Filter.Eq("type", "homework");
+            var list = await grades.Find(filter)
+                .Sort(Builders<BsonDocument>.Sort.Ascending("student_id").Ascending("score")).ToListAsync();
+            //.Project<Person>(Builders<Person>.Projection.Include(p => p.Name).Include(p => p.Pets))
+            //.Project(p => p.Name)
+            //.Sort(Builders<Person>.Sort.Ascending("age")).ToListAsync();
+
+            var sid = "";
+
             foreach (var doc in list)
             {
-                Console.WriteLine(doc.ToBsonDocument());
+                var student_id = doc.GetElement("student_id").ToString();                
+                if (sid != student_id)
+                {
+                    sid = student_id;
+                    //Console.WriteLine(_id);
+                    var _id = doc.GetElement("_id").ToString();
+                    filter = Builders<BsonDocument>.Filter.Eq("_id", _id);
+                    var result = grades.DeleteOne(doc);
+                }
+                //Console.WriteLine(doc.ToBsonDocument());
+                Console.WriteLine(doc);
             }
-
+            Console.WriteLine(list.Count);
             //await people.Find(new BsonDocument())
             //    .ForEachAsync(d => Console.WriteLine(d.ToBsonDocument()));
         }
