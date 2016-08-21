@@ -33,6 +33,7 @@ namespace SimpleMongo
                         FindPerson(cmd);
                         break;
                     case "D":
+                        DeleteHW3();
                         break;
                     case "Q":
                         keepLoop = false;
@@ -52,6 +53,36 @@ namespace SimpleMongo
             var conventionPack = new ConventionPack();
             conventionPack.Add(new CamelCaseElementNameConvention());
             ConventionRegistry.Register("camelCase", conventionPack, t => true);
+        }
+
+        private static async void DeleteHW3()
+        {
+            var students = Open<BsonDocument>("school", "students");
+
+            var pipeline = new BsonDocument[] {
+                new BsonDocument{{ "$sort", new BsonDocument("_id", 1) }},
+                new BsonDocument{{ "$unwind", "$scores" }},
+                new BsonDocument{{ "$match", new BsonDocument {{ "scores.type", "homework" }} }},
+                new BsonDocument{{ "$group", new BsonDocument{
+                                { "_id", "$_id"},
+                                {"lowscore",new BsonDocument{{ "$min","$scores.score"}}}}
+                    }}
+            };
+
+            var result = await students.Aggregate<BsonDocument>(pipeline).ToListAsync();
+
+            foreach(var student in result)
+            {
+                var id = student.GetElement("_id").Value;
+                var lowscore = student.GetElement("lowscore").Value;
+                //Console.WriteLine($"{id} - {lowscore}");
+
+                var builder = Builders<BsonDocument>.Filter;
+                var query = builder.Eq("_id", id) & builder.Eq("scores.score", lowscore);
+                var update = Builders<BsonDocument>.Update.Pull("scores", new BsonDocument(){
+                                                        { "score", lowscore }});
+                //students.UpdateOne(query, update);
+            }
         }
 
         private static async void FindPerson(string cmd)
